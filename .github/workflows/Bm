@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visor de Presentación de Refrigerantes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilo base para el contenedor de la presentación */
+        .slide-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 80vh; /* Altura de la diapositiva */
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            transition: opacity 0.5s ease;
+        }
+        /* Estilos para el contenido de la diapositiva */
+        .slide-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #0d47a1; /* Azul oscuro */
+            margin-bottom: 1.5rem;
+            border-bottom: 3px solid #64b5f6;
+            padding-bottom: 0.5rem;
+        }
+        .slide-content h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #1e88e5; /* Azul medio */
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .slide-content ul {
+            list-style: none;
+            padding-left: 0;
+            margin-top: 1rem;
+        }
+        .slide-content li {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+        .slide-content li::before {
+            content: '•';
+            position: absolute;
+            left: 0;
+            color: #e53935; /* Rojo para viñetas */
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 font-sans antialiased">
+
+    <div id="presentation-app" class="min-h-screen flex flex-col items-center pt-8 pb-12">
+        
+        <!-- Contenedor de la diapositiva -->
+        <div id="slide-display" class="slide-container w-full">
+            <!-- El contenido se inyectará aquí -->
+        </div>
+
+        <!-- Controles de Navegación -->
+        <div class="mt-8 flex justify-between w-full max-w-900px">
+            <button id="prev-btn" class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-full shadow-lg transition-transform duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                ← Anterior
+            </button>
+            <div id="slide-counter" class="text-xl font-semibold text-gray-700 p-3 bg-white rounded-lg shadow-md flex items-center justify-center min-w-[100px]">
+                1 / 9
+            </div>
+            <button id="next-btn" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-full shadow-lg transition-transform duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                Siguiente →
+            </button>
+        </div>
+
+    </div>
+
+    <script>
+        // Configuración de la aplicación y datos
+        let currentSlideIndex = 0;
+        let slides = [];
+        
+        // --- Contenido de la presentación embebido para la demostración ---
+        // ESTE ES EL TEXTO ESTRUCTURADO (CÓDIGO) QUE SERÁ PARSEADO
+        const presentationMarkdown = `
+## Diapositiva 1: Introducción y Agenda
+* **Título:** Refrigerantes Modernos: Equilibrio entre Eficiencia, Ambiente y Seguridad.
+* **Agenda:**
+    * Impacto Ambiental (Ozono y Calentamiento Global).
+    * Clasificación de Seguridad y Peligrosidad.
+    * Foco en Equipos Inverter.
+
+## Diapositiva 2: ¿Qué son los Refrigerantes?
+* **Definición:** Sustancias que absorben y liberan calor.
+* **Tipos Históricos:** CFCs, HCFCs (Ej: R-22).
+* **Tipos Modernos:** HFCs (R-410A) y Bajo PCG (R-32, R-290).
+
+## Diapositiva 3: Impacto Ambiental I: Ozono
+* **Problema:** Agotamiento de la capa de ozono (PAO > 0).
+* **Mecanismo:** Cloro liberado de CFCs y HCFCs.
+* **Regulación:** Protocolo de Montreal.
+
+## Diapositiva 4: Impacto Ambiental II: Calentamiento Global
+* **Problema:** Contribución al efecto invernadero (PCG > 0).
+* **PCG (GWP):** Capacidad de retener calor comparada con CO2.
+* **Ejemplos:** R-410A (~2088), R-32 (~675), R-290 (3).
+
+## Diapositiva 5: Clasificación de Seguridad (ASHRAE)
+* **Toxicidad:** Clase A (Baja), Clase B (Alta).
+* **Inflamabilidad:**
+    * Clase 1: No inflamable (R-410A).
+    * Clase 2L: Ligeramente inflamable (**R-32**).
+    * Clase 3: Altamente inflamable (**R-290**).
+
+## Diapositola 6: Protocolos de Manipulación
+* **Toxicidad:** Ventilación obligatoria y uso de EPI (Gafas, Guantes).
+* **Inflamabilidad (A2L/A3):** Asegurar puesta a tierra.
+* **Peligro:** **Eliminar** todas las fuentes de ignición.
+
+## Diapositiva 7: Foco en Equipos Inverter
+* **Tecnología:** Compresores de velocidad variable, alta eficiencia.
+* **Refrigerantes Comunes:** R-410A, R-32 (A2L) y R-290 (A3).
+* **El Reto:** La sostenibilidad implica manejar refrigerantes inflamables.
+
+## Diapositiva 8: Precauciones Inverter Específicas
+1.  **Herramientas:** Usar herramientas intrínsecamente seguras (a prueba de explosiones) para A2L/A3.
+2.  **Carga Máxima:** Nunca exceder la carga limitada por la normativa del espacio.
+3.  **Soldadura (Brazing):** Línea **absolutamente libre** de refrigerante y purga con nitrógeno seco.
+
+## Diapositiva 9: Conclusión
+* **Mensaje Clave:** La industria exige eficiencia y sostenibilidad.
+* **Llamada a la Acción:** La capacitación y el uso de herramientas certificadas son esenciales para la seguridad.
+`;
+        
+        const slideDisplay = document.getElementById('slide-display');
+        const prevBtn = document.getElementById('prev-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const slideCounter = document.getElementById('slide-counter');
+
+        function parseMarkdown() {
+            // Divide el texto por los encabezados de diapositiva (## Diapositiva X:)
+            const rawSlides = presentationMarkdown.trim().split(/## Diapositiva \d+:\s*/).filter(s => s.trim() !== '');
+            
+            // Procesa cada segmento para generar la estructura de la diapositiva
+            slides = rawSlides.map(slideText => {
+                const lines = slideText.trim().split('\n');
+                let htmlContent = '';
+                let title = 'Diapositiva';
+
+                // La primera línea es siempre el título de la diapositiva
+                if (lines[0]) {
+                    title = lines[0].replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                }
+
+                // Procesar el resto del contenido
+                lines.slice(1).forEach(line => {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) return;
+
+                    // Manejar listas y texto normal
+                    if (trimmedLine.startsWith('*')) {
+                        // Reemplazar Markdown básico con HTML
+                        const content = trimmedLine
+                            .substring(1).trim()
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\[(.*?)\]/g, '<span class="text-red-600 font-semibold">[$1]</span>'); // Resaltar notas
+                        htmlContent += `<li>${content}</li>`;
+                    } else if (trimmedLine.endsWith(':')) {
+                         // Asumir que son subtítulos o secciones de lista
+                        htmlContent += `<h2 class="text-blue-700">${trimmedLine}</h2>`;
+                    } else {
+                        htmlContent += `<p class="text-gray-600">${trimmedLine}</p>`;
+                    }
+                });
+
+                // Envolver el contenido de la lista si hay ítems
+                if (htmlContent.includes('<li>')) {
+                    htmlContent = `<ul class="list-disc pl-5">${htmlContent}</ul>`;
+                }
+
+                return { title, content: htmlContent };
+            });
+        }
+
+        function renderSlide(index) {
+            if (index < 0 || index >= slides.length) return;
+
+            const slide = slides[index];
+            currentSlideIndex = index;
+            
+            // Efecto de transición simple
+            slideDisplay.style.opacity = '0';
+            setTimeout(() => {
+                slideDisplay.innerHTML = `
+                    <h1>${slide.title}</h1>
+                    <div class="slide-content text-gray-800">
+                        ${slide.content}
+                    </div>
+                `;
+                slideDisplay.style.opacity = '1';
+                updateControls();
+            }, 250); // Coincide con el tiempo de transición CSS
+
+        }
+
+        function updateControls() {
+            // Actualizar contador
+            slideCounter.textContent = `${currentSlideIndex + 1} / ${slides.length}`;
+
+            // Control de botones
+            prevBtn.disabled = currentSlideIndex === 0;
+            nextBtn.disabled = currentSlideIndex === slides.length - 1;
+        }
+
+        // --- Manejadores de Eventos ---
+
+        prevBtn.addEventListener('click', () => {
+            if (currentSlideIndex > 0) {
+                renderSlide(currentSlideIndex - 1);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentSlideIndex < slides.length - 1) {
+                renderSlide(currentSlideIndex + 1);
+            }
+        });
+
+        // Inicialización
+        function init() {
+            parseMarkdown();
+            if (slides.length > 0) {
+                renderSlide(0);
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
+
